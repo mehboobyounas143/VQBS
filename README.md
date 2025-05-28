@@ -1,28 +1,56 @@
-# VQBS
-**Virtual Question Bank System**
+# 🌐 VQBS – Virtual Question Bank System
 
-Virtual Question Bank System is a MERN stack-based web application designed to help students prepare for their exams by practicing multiple-choice questions (MCQs). The platform allows users to manage and practice questions, track performance, and seek support. It features a user-friendly interface and an admin panel for managing questions, users, and reports.
+**VQBS** is a full-stack MERN web application that helps students prepare for exams by practicing multiple-choice questions (MCQs). It features an intuitive user interface, robust admin panel, performance analytics, and a responsive design.
 
-**Key Features:**
+🔗 **Live Demo**: [https://vqbs-eight.vercel.app](https://vqbs-eight.vercel.app)
 
-User Management: Admins can add, update, and delete users within the platform.
+---
 
-Question Bank Management: Manage a comprehensive set of MCQs with options to add, update, and delete questions.
+## ✨ Features
 
-Performance Tracking: Users can view reports on their performance to analyze strengths and weaknesses.
+- 👥 **User Management**  
+  Admins can add, edit, or delete users via a dedicated dashboard.
 
-Support System: Integrated communication tools to assist users with any queries.
+- ❓ **Question Bank Management**  
+  Add, update, or delete MCQs across various subjects.
 
-Secure Authentication: Login system with 'Remember Me' functionality.
+- 📊 **Performance Tracking**  
+  Students receive reports and visual analytics of their quiz attempts.
 
-Responsive Design: Optimized for various devices, ensuring a seamless experience.
+- 🔒 **Secure Authentication**  
+  Login functionality with 'Remember Me' option.
 
-**Tech Stack:**
+- 📱 **Responsive Design**  
+  Seamless experience on desktops, tablets, and mobile devices.
 
-Frontend: Next.js (React)
+---
 
-Backend: Node.js (Express)
+## 🛠 Tech Stack
 
-Database: MongoDB
+| Layer      | Technology        |
+|------------|-------------------|
+| Frontend   | **Next.js** (React) |
+| Backend    | **Node.js** with **Express.js** |
+| Database   | **MongoDB** |
+| Styling    | Custom CSS + modern CSS libraries |
+| Deployment | **Vercel** (Frontend) |
 
-CSS Frameworks: Styled with custom CSS and modern styling libraries
+---
+
+
+---
+
+## 🚀 Getting Started
+
+To run locally:
+
+```bash
+# Frontend
+cd client
+npm install
+npm run dev
+
+# Backend
+cd server
+npm install
+npm start
