@@ -204,42 +204,13 @@ const AdminDashboard = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Topics Created Trend */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 border border-green-300 hover:shadow-2xl transition-shadow duration-300">
-          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <svg
-              className="w-6 h-6 text-green-500 animate-pulse"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 20v-6M8 14v-4M16 14v-8"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            Trend of Topics Created
-          </h2>
-          <div className="relative w-full h-64">
-            <Bar
-              data={prepareChartData(topicTrends, 'Topics Created', '#10B981', 'rgba(16, 185, 129, 0.25)')}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { labels: { color: '#059669', font: { weight: 'bold' } } },
-                },
-                scales: {
-                  x: { ticks: { color: '#065f46', font: { weight: '600' } } },
-                  y: { ticks: { color: '#065f46', font: { weight: '600' }, stepSize: 1 }, beginAtZero: true },
-                },
-              }}
-            />
-          </div>
+         {/* Additional card or info can go here */}
+        <div className="flex flex-col justify-center items-center bg-white rounded-2xl shadow-xl p-6 border border-green-300 hover:shadow-2xl transition-shadow duration-300 text-center text-gray-700 font-semibold text-lg">
+          <p>Welcome back, Admin! Use the sidebar to manage the system.</p>
+          <p className="mt-4 text-sm text-green-600 italic">Last updated: {new Date().toLocaleString()}</p>
         </div>
 
-        {/* Students by Subject */}
+                {/* Students by Subject */}
         <div className="bg-white rounded-2xl shadow-xl p-6 border border-green-300 hover:shadow-2xl transition-shadow duration-300">
           <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <svg
@@ -318,10 +289,39 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Additional card or info can go here */}
-        <div className="flex flex-col justify-center items-center bg-white rounded-2xl shadow-xl p-6 border border-green-300 hover:shadow-2xl transition-shadow duration-300 text-center text-gray-700 font-semibold text-lg">
-          <p>Welcome back, Admin! Use the sidebar to manage the system.</p>
-          <p className="mt-4 text-sm text-green-600 italic">Last updated: {new Date().toLocaleString()}</p>
+        {/* Topics Created Trend */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 border border-green-300 hover:shadow-2xl transition-shadow duration-300">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <svg
+              className="w-6 h-6 text-green-500 animate-pulse"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 20v-6M8 14v-4M16 14v-8"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Trend of Topics Created
+          </h2>
+          <div className="relative w-full h-64">
+            <Bar
+              data={prepareChartData(topicTrends, 'Topics Created', '#10B981', 'rgba(16, 185, 129, 0.25)')}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { labels: { color: '#059669', font: { weight: 'bold' } } },
+                },
+                scales: {
+                  x: { ticks: { color: '#065f46', font: { weight: '600' } } },
+                  y: { ticks: { color: '#065f46', font: { weight: '600' }, stepSize: 1 }, beginAtZero: true },
+                },
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

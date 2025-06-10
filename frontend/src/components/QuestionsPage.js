@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ScoreModal from './ScoreModal';
 import DifficultyModal from './DifficultyModal';
 
-const QuestionsPage = ({ topicId, subjectId }) => {
+const QuestionsPage = ({ topicId, subjectId, onBack }) => {
   const [questions, setQuestions] = useState([]);
   const [responses, setResponses] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -46,6 +46,12 @@ const QuestionsPage = ({ topicId, subjectId }) => {
   };
 
   const handleSubmit = async () => {
+    // Validation: Check if all questions are answered
+    if (Object.keys(responses).length !== questions.length) {
+      alert('Please select atleast 1 MCQ.');
+      return;
+    }
+
     const responsesArray = Object.keys(responses)
       .map((questionId) => {
         const response = responses[questionId];
@@ -85,11 +91,19 @@ const QuestionsPage = ({ topicId, subjectId }) => {
     setIsSubmitted(true);
   };
 
+  const handleDifficultyModalClose = (status) => {
+    if (status === 'cancelled') {
+      onBack();
+    } else {
+      setShowDifficultyModal(false);
+    }
+  };
+
   return (
     <div className="mt-8">
       {showDifficultyModal && (
         <DifficultyModal
-          onClose={() => setShowDifficultyModal(false)}
+          onClose={handleDifficultyModalClose}
           onSelectDifficulty={(difficulty) => setSelectedDifficulty(difficulty)}
         />
       )}
@@ -97,49 +111,49 @@ const QuestionsPage = ({ topicId, subjectId }) => {
         <>
           {loading && <p className="text-gray-600">Loading questions...</p>}
           {error && (
-            <div className="flex items-center justify-center">
-              <p className="text-red-600 border border-red-500 p-4 rounded-md">
-                {error}
-              </p>
-            </div>
+            <div className="text-red-600 text-center my-4">{error}</div>
           )}
           {!loading && !error && questions.length === 0 && (
-            <p className="text-[#2ecc71]">No questions available for this topic.</p>
+            <p className="text-gray-500 text-center">No questions available for this topic.</p>
           )}
-          {!loading && !error && questions.length > 0 && (
-            <>
-              <h2 className="text-3xl font-bold text-[#2ecc71] mb-4">Questions</h2>
-              {questions.map((question) => (
-                <div key={question._id} className="bg-white p-4 rounded-lg shadow-md mb-4">
-                  <h3 className="text-lg font-semibold text-[#2ecc71]">{question.questionText}</h3>
-                  <ul className="list-disc ml-5 mt-2">
-                    {question.options.map((option, index) => (
-                      <li key={index} className="mt-1">
-                        <label className="text-[#2ecc71]">
-                          <input
-                            type="radio"
-                            name={`question-${question._id}`}
-                            value={option}
-                            onChange={() => handleResponseChange(question._id, option)}
-                            disabled={isSubmitted}
-                          />{' '}
-                          {option}
-                        </label>
-                      </li>
+          {!loading && questions.length > 0 && (
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+              {questions.map((question, index) => (
+                <div key={question._id} className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">
+                    {index + 1}. {question.questionText}
+                  </h3>
+                  <div className="space-y-2">
+                    {question.options.map((option, idx) => (
+                      <label key={idx} className="flex items-center">
+                        <input
+                          type="radio"
+                          name={question._id}
+                          value={option}
+                          checked={responses[question._id] === option}
+                          onChange={() => handleResponseChange(question._id, option)}
+                          className="mr-2"
+                        />
+                        {option}
+                      </label>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               ))}
-              {!isSubmitted && (
-                <button
-                  className="mt-4 bg-[#2ecc71] text-white px-4 py-2 rounded hover:bg-[#a51d47] transition-colors duration-300"
-                  onClick={handleSubmit}
-                >
-                  Submit
-                </button>
-              )}
-              {isSubmitted && <ScoreModal score={score} totalQuestions={questions.length} />}
-            </>
+              <button
+                type="submit"
+                className="bg-[#2ecc71] text-white py-2 px-4 rounded hover:bg-[#0b8c42] transition"
+              >
+                Submit
+              </button>
+            </form>
+          )}
+          {isSubmitted && (
+            <ScoreModal
+              score={score}
+              total={questions.length}
+              onClose={() => window.location.reload()}
+            />
           )}
         </>
       )}
