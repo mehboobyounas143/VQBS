@@ -24,7 +24,18 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+// Optional: Restrict uploads to images only
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif/;
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedTypes.test(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed'));
+  }
+};
+
+const upload = multer({ storage, fileFilter });
 
 // Routes
 router.post('/subjects', upload.single('image'), createSubject);

@@ -16,7 +16,7 @@ const StudentLogin = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/profile'); // Redirect to profile page if user is already logged in
+      navigate('/subjects'); // Redirect to subjects page if user is already logged in
     }
   }, [isAuthenticated, navigate]);
 
@@ -45,7 +45,7 @@ const StudentLogin = () => {
       if (response && response.data && response.data.token && response.data.student) {
         toast.success('Login successful!');
         login(response.data.token, response.data.student); // Update the global auth state
-        navigate('/profile'); // Navigate to the profile page after login
+        navigate('/subjects'); // Navigate to the subjects page after login
       } else {
         toast.error('Unexpected response structure.');
       }
@@ -101,7 +101,7 @@ const StudentLogin = () => {
       <div className="mt-4 text-center">
         <p className="text-gray-600">
           Don't have an account?{' '}
-          <Link to="/register" className="text-[#2ecc71]  hover:underline">
+          <Link to="/register" className="text-[#2ecc71] hover:underline">
             Register Here
           </Link>
         </p>

@@ -11,9 +11,10 @@ const reportRoutes = require('./routes/reportRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const responseRoutes = require('./routes/responseRoutes');
+const searchRoutes = require('./routes/search'); // ✅ Added search route
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 connectDB();
 
@@ -35,6 +36,7 @@ app.use('/api', reportRoutes);
 app.use('/api', studentRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', responseRoutes);
+app.use('/api/search', searchRoutes); // ✅ Search route added here
 
 app.listen(PORT, () => {
   console.log(`Server is running on Port: ${PORT}`);
