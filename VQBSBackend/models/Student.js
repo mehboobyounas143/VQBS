@@ -20,7 +20,7 @@ const studentSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Date of birth is required'],
     validate: {
-      validator: (value) => value < Date.now(), // Ensure the date is in the past
+      validator: (value) => value < Date.now(),
       message: 'Date of birth must be in the past'
     }
   },
@@ -28,9 +28,17 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters long']
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: {
+    type: String
   }
 }, { timestamps: true });
 
+// Hash password before saving
 studentSchema.pre('save', async function(next) {
   const student = this;
 
@@ -48,6 +56,7 @@ studentSchema.pre('save', async function(next) {
   }
 });
 
+// Password comparison method
 studentSchema.methods.comparePassword = async function(candidatePassword) {
   const student = this;
   try {
