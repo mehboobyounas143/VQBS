@@ -1,17 +1,28 @@
 import React from 'react';
-import { TrashIcon, EyeIcon, PlusIcon } from '@heroicons/react/outline';
+import { TrashIcon, EyeIcon, PlusIcon, RefreshIcon } from '@heroicons/react/outline';
 
-const StudentTable = ({ students, onShowModal, onDelete, onAddStudent }) => {
+const StudentTable = ({ students, onShowModal, onDelete, onAddStudent, onRefresh, loading }) => {
   return (
     <div className="max-w-6xl bg-white">
-      {/* Add Student Button */}
-      <div className="flex justify-end mb-4">
+      {/* Buttons Section */}
+      <div className="flex justify-end mb-4 space-x-2">
+        {/* Add Student Button */}
         <button
           onClick={onAddStudent}
-          className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+          className="flex items-center px-4 py-2 bg-[#2ecc71] text-white rounded-md hover:bg-[#0b8c42]"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Add Student
+        </button>
+
+        {/* Refresh Button */}
+        <button
+          onClick={onRefresh}
+          className="flex items-center px-4 py-2 bg-[#2ecc71] text-white rounded-md hover:bg-[#0b8c42] disabled:opacity-50"
+          disabled={loading}
+        >
+          <RefreshIcon className={`h-5 w-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          {loading ? 'Refreshing...' : 'Refresh List'}
         </button>
       </div>
 

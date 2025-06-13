@@ -6,9 +6,10 @@ import StudentModal from './StudentModal';
 const Students = () => {
   const [students, setStudents] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false); // for add student modal
+  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchStudents();
@@ -16,6 +17,7 @@ const Students = () => {
 
   const fetchStudents = async () => {
     try {
+      setLoading(true);
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}api/students`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -29,12 +31,18 @@ const Students = () => {
       }
     } catch (error) {
       console.error('Error fetching students:', error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchStudents();
   };
 
   const handleShowModal = (student) => {
     setSelectedStudent(student);
-    setIsEditing(false);
+    setIsEditing(true);
     setShowModal(true);
   };
 
@@ -63,8 +71,8 @@ const Students = () => {
     }
   };
 
-  const handleEditSubmit = async () => {
-    const { _id, firstName, lastName, email, dateOfBirth } = selectedStudent;
+  const handleEditSubmit = async (updatedStudentData) => {
+    const { _id, firstName, lastName, email, dateOfBirth } = updatedStudentData;
 
     try {
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}api/students/${_id}`, {
@@ -84,6 +92,8 @@ const Students = () => {
           )
         );
         setIsEditing(false);
+        setShowModal(false);
+        setSelectedStudent(null);
       } else {
         console.error('Error updating student:', response.statusText);
       }
@@ -96,7 +106,6 @@ const Students = () => {
     setShowAddModal(true);
   };
 
-  // UPDATED: safely handle new student data shape
   const handleStudentAdded = (newStudentData) => {
     const newStudent = newStudentData.student || newStudentData;
     setStudents((prev) => [...prev, newStudent]);
@@ -107,11 +116,14 @@ const Students = () => {
     <>
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Students</h1>
       <div className="container mx-auto sm:w-[90%] m-auto">
+
         <StudentTable
           students={students}
           onShowModal={handleShowModal}
           onDelete={handleDelete}
           onAddStudent={handleAddStudentClick}
+          onRefresh={handleRefresh}
+          loading={loading} // ✅ Pass loading prop
         />
 
         {/* View/Edit Modal */}
@@ -120,10 +132,8 @@ const Students = () => {
             selectedStudent={selectedStudent}
             isEditing={isEditing}
             onClose={handleCloseModal}
-            onSave={handleDelete}
             onSubmitEdit={handleEditSubmit}
             setSelectedStudent={setSelectedStudent}
-            setIsEditing={setIsEditing}
           />
         )}
 
