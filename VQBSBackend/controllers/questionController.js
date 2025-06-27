@@ -8,23 +8,15 @@ const createQuestion = async (req, res) => {
   try {
     const { questionText, type, options, correctAnswer, subject, topic, difficultyLevel } = req.body;
 
-    // Validate related entities
     const foundSubject = await Subject.findById(subject);
-    if (!foundSubject) {
-      return res.status(404).json({ error: 'Subject not found' });
-    }
+    if (!foundSubject) return res.status(404).json({ error: 'Subject not found' });
 
     const foundTopic = await Topic.findById(topic);
-    if (!foundTopic) {
-      return res.status(404).json({ error: 'Topic not found' });
-    }
+    if (!foundTopic) return res.status(404).json({ error: 'Topic not found' });
 
     const foundDifficultyLevel = await DifficultyLevel.findById(difficultyLevel);
-    if (!foundDifficultyLevel) {
-      return res.status(404).json({ error: 'Difficulty level not found' });
-    }
+    if (!foundDifficultyLevel) return res.status(404).json({ error: 'Difficulty level not found' });
 
-    // Create question
     const newQuestion = new Question({
       questionText,
       type,
@@ -65,9 +57,7 @@ const getQuestionById = async (req, res) => {
       .populate('subject')
       .populate('topic')
       .populate('difficultyLevel');
-    if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
-    }
+    if (!question) return res.status(404).json({ message: 'Question not found' });
     res.status(200).json({ question });
   } catch (error) {
     console.error(error);
@@ -81,32 +71,22 @@ const updateQuestion = async (req, res) => {
     const { id } = req.params;
     const { questionText, type, options, correctAnswer, subject, topic, difficultyLevel } = req.body;
 
-    // Validate related entities
     const foundSubject = await Subject.findById(subject);
-    if (!foundSubject) {
-      return res.status(404).json({ error: 'Subject not found' });
-    }
+    if (!foundSubject) return res.status(404).json({ error: 'Subject not found' });
 
     const foundTopic = await Topic.findById(topic);
-    if (!foundTopic) {
-      return res.status(404).json({ error: 'Topic not found' });
-    }
+    if (!foundTopic) return res.status(404).json({ error: 'Topic not found' });
 
     const foundDifficultyLevel = await DifficultyLevel.findById(difficultyLevel);
-    if (!foundDifficultyLevel) {
-      return res.status(404).json({ error: 'Difficulty level not found' });
-    }
+    if (!foundDifficultyLevel) return res.status(404).json({ error: 'Difficulty level not found' });
 
-    // Update question
     const updatedQuestion = await Question.findByIdAndUpdate(
       id,
       { questionText, type, options, correctAnswer, subject, topic, difficultyLevel },
       { new: true }
     );
 
-    if (!updatedQuestion) {
-      return res.status(404).json({ message: 'Question not found' });
-    }
+    if (!updatedQuestion) return res.status(404).json({ message: 'Question not found' });
 
     res.status(200).json({ message: 'Question updated successfully', question: updatedQuestion });
   } catch (error) {
@@ -121,9 +101,7 @@ const deleteQuestion = async (req, res) => {
     const { id } = req.params;
     const deletedQuestion = await Question.findByIdAndDelete(id);
 
-    if (!deletedQuestion) {
-      return res.status(404).json({ message: 'Question not found' });
-    }
+    if (!deletedQuestion) return res.status(404).json({ message: 'Question not found' });
 
     res.status(200).json({ message: 'Question deleted successfully' });
   } catch (error) {
@@ -132,7 +110,7 @@ const deleteQuestion = async (req, res) => {
   }
 };
 
-// Get questions by topic ID
+// Get questions by topic ID (with fixed difficulty case-insensitive lookup)
 const getQuestionsByTopicId = async (req, res) => {
   try {
     const { topicId } = req.params;
@@ -140,19 +118,18 @@ const getQuestionsByTopicId = async (req, res) => {
 
     const query = { topic: topicId };
 
-    // Resolve difficulty level if provided
     if (difficulty) {
-      const difficultyDoc = await DifficultyLevel.findOne({ levelName: difficulty });
+      const difficultyDoc = await DifficultyLevel.findOne({ levelName: new RegExp(`^${difficulty}$`, 'i') });
       if (!difficultyDoc) {
         return res.status(404).json({ error: `Difficulty level "${difficulty}" not found` });
       }
-      query.difficultyLevel = difficultyDoc._id; // Add resolved ObjectId to the query
+      query.difficultyLevel = difficultyDoc._id;
     }
 
     const questions = await Question.find(query)
-      .populate('subject', 'name') // Populate only the name field from Subject
-      .populate('topic', 'name')   // Populate only the name field from Topic
-      .populate('difficultyLevel', 'levelName'); // Populate only the levelName field from DifficultyLevel
+      .populate('subject', 'subjectName')
+      .populate('topic', 'topicName')
+      .populate('difficultyLevel', 'levelName');
 
     if (questions.length === 0) {
       return res.status(404).json({ message: 'No questions found for this topic and difficulty level.' });
@@ -165,13 +142,12 @@ const getQuestionsByTopicId = async (req, res) => {
   }
 };
 
-// New API: Get questions by difficulty level for a specific subject
+// Get questions by difficulty and subject
 const getQuestionsByDifficultyAndSubject = async (req, res) => {
   try {
     const { subjectId } = req.params;
     const { difficulty } = req.query;
 
-    // Build query object
     const query = { subject: subjectId };
     if (difficulty) {
       query.difficultyLevel = difficulty;
@@ -200,5 +176,5 @@ module.exports = {
   updateQuestion,
   deleteQuestion,
   getQuestionsByTopicId,
-  getQuestionsByDifficultyAndSubject, // Export the new API
+  getQuestionsByDifficultyAndSubject,
 };

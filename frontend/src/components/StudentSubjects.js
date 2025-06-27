@@ -3,6 +3,12 @@ import axios from 'axios';
 import TopicsPage from './TopicsPage';
 import QuestionsPage from './QuestionsPage';
 
+const difficultyMap = {
+  '685efa2290e1f12447eec0f5': 'hard',
+  '682a12659d47476377674c79': 'medium',
+  '6834c66fe3565688f394555c': 'easy',
+};
+
 const StudentSubjects = () => {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -12,6 +18,8 @@ const StudentSubjects = () => {
   const [globalQuestionResults, setGlobalQuestionResults] = useState([]);
   const [globalTopicResults, setGlobalTopicResults] = useState([]);
   const [globalSubjectResults, setGlobalSubjectResults] = useState([]);
+  const [bypassDifficulty, setBypassDifficulty] = useState(false);
+  const [bypassDifficultyLevel, setBypassDifficultyLevel] = useState(null);
 
   const fetchSubjects = () => {
     axios.get(`${process.env.REACT_APP_BACKEND_URL}api/subjects`)
@@ -37,29 +45,21 @@ const StudentSubjects = () => {
     setSelectedTopic(null);
     setQuestions([]);
     setSearchTerm('');
-    setGlobalQuestionResults([]);
-    setGlobalTopicResults([]);
-    setGlobalSubjectResults([]);
+    clearResults();
   };
 
   const handleTopicClick = (id) => {
     setSelectedTopic(id);
-    axios.get(`${process.env.REACT_APP_BACKEND_URL}api/questions/topic/${id}`)
-      .then(res => setQuestions(res.data.questions || []))
-      .catch(() => setQuestions([]));
+    setQuestions([]);
     setSearchTerm('');
-    setGlobalQuestionResults([]);
-    setGlobalTopicResults([]);
-    setGlobalSubjectResults([]);
+    clearResults();
   };
 
   const handleBackToTopics = () => {
     setSelectedTopic(null);
     setQuestions([]);
     setSearchTerm('');
-    setGlobalQuestionResults([]);
-    setGlobalTopicResults([]);
-    setGlobalSubjectResults([]);
+    clearResults();
   };
 
   const handleBackToSubjects = () => {
@@ -67,6 +67,10 @@ const StudentSubjects = () => {
     setSelectedTopic(null);
     setQuestions([]);
     setSearchTerm('');
+    clearResults();
+  };
+
+  const clearResults = () => {
     setGlobalQuestionResults([]);
     setGlobalTopicResults([]);
     setGlobalSubjectResults([]);
@@ -77,9 +81,7 @@ const StudentSubjects = () => {
     setSearchTerm(val);
 
     if (val.trim() === '') {
-      setGlobalQuestionResults([]);
-      setGlobalTopicResults([]);
-      setGlobalSubjectResults([]);
+      clearResults();
       return;
     }
 
@@ -91,11 +93,24 @@ const StudentSubjects = () => {
       setGlobalTopicResults(res.data.topics || []);
       setGlobalSubjectResults(res.data.subjects || []);
     })
-    .catch(() => {
-      setGlobalQuestionResults([]);
-      setGlobalTopicResults([]);
-      setGlobalSubjectResults([]);
-    });
+    .catch(() => clearResults());
+  };
+
+  const handleQuestionClick = (question) => {
+    const subjectId = question.subject?._id || question.subject;
+    const topicId = question.topic?._id || question.topic;
+
+    // Map difficulty ID to lowercase difficulty name string
+    const difficultyId = question.difficultyLevel?._id || question.difficultyLevel;
+    const difficultyName = difficultyMap[difficultyId] || 'medium';
+
+    setSelectedSubject(subjectId);
+    setSelectedTopic(topicId);
+    setQuestions([]);
+    setBypassDifficulty(true);
+    setBypassDifficultyLevel(difficultyName); // pass difficulty as string name!
+    setSearchTerm('');
+    clearResults();
   };
 
   const filteredSubjects = useMemo(() => {
@@ -117,12 +132,7 @@ const StudentSubjects = () => {
       const subjectName = subjects.find(subj => subj._id === selectedSubject)?.subjectName || 'Subject';
       return (
         <>
-          <button 
-            onClick={handleBackToSubjects}
-            className="text-green-600 hover:underline mb-1"
-          >
-            ← Back to Subjects
-          </button>
+          <button onClick={handleBackToSubjects} className="text-green-600 hover:underline mb-1">← Back to Subjects</button>
           <h1 className="text-3xl font-bold text-green-700">{subjectName}</h1>
           <p className="text-gray-600">Select a topic to see questions</p>
         </>
@@ -130,12 +140,7 @@ const StudentSubjects = () => {
     } else if (selectedTopic) {
       return (
         <>
-          <button 
-            onClick={handleBackToTopics}
-            className="text-green-600 hover:underline mb-1"
-          >
-            ← Back to Topics
-          </button>
+          <button onClick={handleBackToTopics} className="text-green-600 hover:underline mb-1">← Back to Topics</button>
           <h1 className="text-3xl font-bold text-green-700">Questions</h1>
         </>
       );
@@ -144,11 +149,8 @@ const StudentSubjects = () => {
 
   return (
     <div className="container mx-auto py-10 px-6 min-h-screen bg-white">
-      <div className="mb-8 text-center">
-        {renderHeader()}
-      </div>
+      <div className="mb-8 text-center">{renderHeader()}</div>
 
-      {/* Search input */}
       <div className="mb-8 max-w-md mx-auto">
         <input
           type="text"
@@ -206,24 +208,24 @@ const StudentSubjects = () => {
               <h2 className="text-2xl font-semibold mb-4 text-green-700">Questions matching "{searchTerm}"</h2>
               <div className="space-y-4">
                 {globalQuestionResults.map(q => (
-                  <div key={q._id} className="border p-4 rounded shadow-sm hover:shadow-md transition">
+                  <div
+                    key={q._id}
+                    onClick={() => handleQuestionClick(q)}
+                    className="cursor-pointer border p-4 rounded shadow-sm hover:shadow-md transition"
+                  >
                     <h3 className="font-semibold text-green-700 mb-2">{q.questionText}</h3>
                     <div className="text-sm text-gray-700 mb-1"><strong>Subject:</strong> {q.subject?.subjectName || 'N/A'}</div>
                     <div className="text-sm text-gray-700 mb-1"><strong>Topic:</strong> {q.topic?.topicName || 'N/A'}</div>
-                    <div className="text-sm text-gray-700"><strong>Options:</strong> {q.options.join(', ')}</div>
+                    <div className="text-sm text-gray-700"><strong>Options:</strong> {q.options?.join(', ') || 'N/A'}</div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {globalSubjectResults.length === 0 && globalTopicResults.length === 0 && globalQuestionResults.length === 0 && (
-            <p className="text-center text-gray-500">No results found.</p>
-          )}
         </div>
       )}
 
-      {/* If no search, show default subjects */}
+      {/* Default Subject List */}
       {!searchTerm.trim() && !selectedSubject && !selectedTopic && (
         <>
           {filteredSubjects.length === 0 ? (
@@ -250,7 +252,7 @@ const StudentSubjects = () => {
         </>
       )}
 
-      {/* Topics page */}
+      {/* Topics Page */}
       {selectedSubject && !selectedTopic && (
         <TopicsPage
           subjectId={selectedSubject}
@@ -259,13 +261,15 @@ const StudentSubjects = () => {
         />
       )}
 
-      {/* Questions page */}
+      {/* Questions Page */}
       {selectedTopic && (
         <QuestionsPage
           topicId={selectedTopic}
           subjectId={selectedSubject}
           questions={questions}
           onBack={handleBackToTopics}
+          bypassDifficulty={bypassDifficulty}
+          bypassDifficultyLevel={bypassDifficultyLevel}
         />
       )}
     </div>

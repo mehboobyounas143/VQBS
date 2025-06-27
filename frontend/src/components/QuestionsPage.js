@@ -4,7 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import ScoreModal from './ScoreModal';
 import DifficultyModal from './DifficultyModal';
 
-const QuestionsPage = ({ topicId, subjectId, onBack }) => {
+const QuestionsPage = ({
+  topicId,
+  subjectId,
+  onBack,
+  bypassDifficulty = false,
+  bypassDifficultyLevel = null, // expects 'easy', 'medium', or 'hard'
+}) => {
   const [questions, setQuestions] = useState([]);
   const [responses, setResponses] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -16,18 +22,28 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (topicId && selectedDifficulty) {
+    if (bypassDifficulty && bypassDifficultyLevel) {
+      setSelectedDifficulty(bypassDifficultyLevel.toLowerCase());
+      setShowDifficultyModal(false);
+    } else if (topicId && selectedDifficulty) {
       setShowDifficultyModal(false);
       fetchQuestions();
     }
-  }, [topicId, selectedDifficulty]);
+  }, [topicId, selectedDifficulty, bypassDifficulty, bypassDifficultyLevel]);
+
+  useEffect(() => {
+    if (selectedDifficulty && topicId) {
+      fetchQuestions();
+    }
+  }, [selectedDifficulty, topicId]);
 
   const fetchQuestions = async () => {
     setLoading(true);
     setError(null);
     try {
+      const difficultyName = selectedDifficulty || 'medium';
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}api/questions/topic/${topicId}?difficulty=${selectedDifficulty}`
+        `${process.env.REACT_APP_BACKEND_URL}api/questions/topic/${topicId}?difficulty=${difficultyName}`
       );
       setQuestions(response.data.questions || []);
     } catch (err) {
@@ -39,8 +55,8 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
   };
 
   const handleResponseChange = (questionId, answer) => {
-    setResponses((prevResponses) => ({
-      ...prevResponses,
+    setResponses(prev => ({
+      ...prev,
       [questionId]: answer,
     }));
   };
@@ -51,15 +67,14 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
       return;
     }
 
-    const responsesArray = Object.keys(responses).map((questionId) => {
+    const responsesArray = Object.keys(responses).map(questionId => {
       const response = responses[questionId];
-      const question = questions.find((q) => q._id === questionId);
+      const question = questions.find(q => q._id === questionId);
       if (!response || !question) return null;
 
-      const isCorrect =
-        question.type === 'Descriptive'
-          ? null
-          : question.correctAnswer === response;
+      const isCorrect = question.type === 'Descriptive'
+        ? null
+        : question.correctAnswer === response;
 
       return {
         questionId,
@@ -71,7 +86,7 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
       };
     }).filter(Boolean);
 
-    const calculatedScore = responsesArray.filter((r) => r.isCorrect === true).length;
+    const calculatedScore = responsesArray.filter(r => r.isCorrect === true).length;
     setScore(calculatedScore);
 
     if (responsesArray.length > 0 && isAuthenticated) {
@@ -103,10 +118,10 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
 
   return (
     <div className="mt-8">
-      {showDifficultyModal && (
+      {showDifficultyModal && !bypassDifficulty && (
         <DifficultyModal
           onClose={handleDifficultyModalClose}
-          onSelectDifficulty={(difficulty) => setSelectedDifficulty(difficulty)}
+          onSelectDifficulty={(difficulty) => setSelectedDifficulty(difficulty.toLowerCase())}
         />
       )}
       {!showDifficultyModal && (
@@ -119,7 +134,7 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
             <p className="text-gray-500 text-center">No questions available for this topic.</p>
           )}
           {!loading && questions.length > 0 && (
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+            <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
               {questions.map((question, index) => (
                 <div key={question._id} className="mb-6">
                   <h3 className="text-lg font-semibold mb-2">
@@ -132,7 +147,7 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
                       className="w-full border border-gray-300 rounded p-2"
                       placeholder="Type your answer here..."
                       value={responses[question._id] || ''}
-                      onChange={(e) => handleResponseChange(question._id, e.target.value)}
+                      onChange={e => handleResponseChange(question._id, e.target.value)}
                     />
                   ) : (
                     <div className="space-y-2">
