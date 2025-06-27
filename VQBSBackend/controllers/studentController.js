@@ -1,6 +1,8 @@
-const bcrypt = require('bcryptjs'); // Import bcrypt for password hashing
-const jwt = require('jsonwebtoken'); // Import jsonwebtoken for token generation
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const createStudent = async (req, res) => {
   try {
@@ -11,8 +13,38 @@ const createStudent = async (req, res) => {
       return res.status(400).json({ error: 'Email is already in use' });
     }
 
-    const newStudent = new Student({ firstName, lastName, email, dateOfBirth, password });
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const newStudent = new Student({
+      firstName,
+      lastName,
+      email,
+      dateOfBirth,
+      password,
+      verificationToken
+    });
+
     await newStudent.save();
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: newStudent.email,
+      subject: 'VQBS Email Verification',
+      html: `
+        <h2>VQBS Email Verification</h2>
+        <p>Please click the link below to verify your email:</p>
+        <a href="${process.env.FRONTEND_URL}/verify/${verificationToken}">Verify Email</a>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
 
     res.status(201).json({ student: newStudent });
   } catch (error) {
@@ -20,6 +52,24 @@ const createStudent = async (req, res) => {
   }
 };
 
+const verifyStudentEmail = async (req, res) => {
+  try {
+    const student = await Student.findOne({ verificationToken: req.params.token });
+
+    if (!student) {
+      return res.status(400).send('Invalid or expired verification token');
+    }
+
+    student.isVerified = true;
+    student.verificationToken = undefined;
+    await student.save();
+
+    res.send('Email verified successfully! You can now log in.');
+  } catch (error) {
+    console.error('Error during verification:', error);
+    res.status(500).send('Internal server error');
+  }
+};
 
 const loginStudent = async (req, res) => {
   try {
@@ -28,6 +78,10 @@ const loginStudent = async (req, res) => {
 
     if (!student) {
       return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    if (!student.isVerified) {
+      return res.status(400).json({ error: 'Please verify your email before logging in.' });
     }
 
     const isMatch = await student.comparePassword(password);
@@ -43,22 +97,19 @@ const loginStudent = async (req, res) => {
   }
 };
 
-
-// Get all students
 const getAllStudents = async (req, res) => {
   try {
-    const students = await Student.find(); // Removed .populate('subjects')
+    const students = await Student.find();
     res.status(200).json({ students });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Get student by ID
 const getStudentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const student = await Student.findById(id); // Removed .populate('subjects')
+    const student = await Student.findById(id);
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
@@ -68,7 +119,6 @@ const getStudentById = async (req, res) => {
   }
 };
 
-// Delete a student
 const deleteStudent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -82,7 +132,6 @@ const deleteStudent = async (req, res) => {
   }
 };
 
-// Update a student
 const updateStudent = async (req, res) => {
   debugger;
   try {
@@ -90,7 +139,6 @@ const updateStudent = async (req, res) => {
     const { firstName, lastName, email, dateOfBirth, password } = req.body;
 
     if (password) {
-      // Hash the password if provided
       req.body.password = await bcrypt.hash(password, 10);
     }
 
@@ -104,7 +152,6 @@ const updateStudent = async (req, res) => {
   }
 };
 
-// Logout student and clear token cookie
 const logoutStudent = async (req, res) => {
   try {
     res.clearCookie('token');
@@ -121,5 +168,6 @@ module.exports = {
   updateStudent,
   deleteStudent,
   loginStudent,
-  logoutStudent
+  logoutStudent,
+  verifyStudentEmail
 };

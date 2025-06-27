@@ -20,6 +20,7 @@ import AdminSettings from './components/admin/AdminSettings';
 import Reports from './components/Reports';
 import AdminReports from './components/admin/AdminReports';
 import AdminLogin from './components/admin/AdminLogin';
+import VerifyEmail from './components/VerifyEmail'; // ✅ added
 
 const StudentLayout = () => (
   <div className="flex flex-col min-h-screen">
@@ -45,6 +46,7 @@ const StudentLayout = () => (
             </PrivateRoute>
           }
         />
+        <Route path="/verify/:token" element={<VerifyEmail />} /> {/* ✅ added */}
       </Routes>
     </main>
     <Footer />
@@ -79,6 +81,7 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              <Route path="verify/:token" element={<VerifyEmail />} /> {/* ✅ added */}
             </Route>
 
             {/* Admin Routes with AdminLayout */}
