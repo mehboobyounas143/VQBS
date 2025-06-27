@@ -46,31 +46,32 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
   };
 
   const handleSubmit = async () => {
-    // Validation: Check if all questions are answered
-    if (Object.keys(responses).length !== questions.length) {
-      alert('Please select atleast 1 MCQ.');
+    if (Object.keys(responses).length === 0) {
+      alert('Please answer at least one question.');
       return;
     }
 
-    const responsesArray = Object.keys(responses)
-      .map((questionId) => {
-        const response = responses[questionId];
-        const question = questions.find((q) => q._id === questionId);
+    const responsesArray = Object.keys(responses).map((questionId) => {
+      const response = responses[questionId];
+      const question = questions.find((q) => q._id === questionId);
+      if (!response || !question) return null;
 
-        if (!response || !question) return null;
+      const isCorrect =
+        question.type === 'Descriptive'
+          ? null
+          : question.correctAnswer === response;
 
-        return {
-          questionId,
-          answer: response,
-          isCorrect: question.correctAnswer === response,
-          subjectId,
-          topicId,
-          difficultyLevel: question.difficultyLevel,
-        };
-      })
-      .filter((response) => response !== null);
+      return {
+        questionId,
+        answer: response,
+        isCorrect,
+        subjectId,
+        topicId,
+        difficultyLevel: question.difficultyLevel,
+      };
+    }).filter(Boolean);
 
-    const calculatedScore = responsesArray.filter((response) => response.isCorrect).length;
+    const calculatedScore = responsesArray.filter((r) => r.isCorrect === true).length;
     setScore(calculatedScore);
 
     if (responsesArray.length > 0 && isAuthenticated) {
@@ -88,6 +89,7 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
         }
       }
     }
+
     setIsSubmitted(true);
   };
 
@@ -123,23 +125,35 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
                   <h3 className="text-lg font-semibold mb-2">
                     {index + 1}. {question.questionText}
                   </h3>
-                  <div className="space-y-2">
-                    {question.options.map((option, idx) => (
-                      <label key={idx} className="flex items-center">
-                        <input
-                          type="radio"
-                          name={question._id}
-                          value={option}
-                          checked={responses[question._id] === option}
-                          onChange={() => handleResponseChange(question._id, option)}
-                          className="mr-2"
-                        />
-                        {option}
-                      </label>
-                    ))}
-                  </div>
+
+                  {question.type === 'Descriptive' ? (
+                    <textarea
+                      rows={4}
+                      className="w-full border border-gray-300 rounded p-2"
+                      placeholder="Type your answer here..."
+                      value={responses[question._id] || ''}
+                      onChange={(e) => handleResponseChange(question._id, e.target.value)}
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      {question.options.map((option, idx) => (
+                        <label key={idx} className="flex items-center">
+                          <input
+                            type="radio"
+                            name={question._id}
+                            value={option}
+                            checked={responses[question._id] === option}
+                            onChange={() => handleResponseChange(question._id, option)}
+                            className="mr-2"
+                          />
+                          {option}
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
+
               <button
                 type="submit"
                 className="bg-[#2ecc71] text-white py-2 px-4 rounded hover:bg-[#0b8c42] transition"
@@ -151,7 +165,7 @@ const QuestionsPage = ({ topicId, subjectId, onBack }) => {
           {isSubmitted && (
             <ScoreModal
               score={score}
-              total={questions.length}
+              total={questions.filter(q => q.type !== 'Descriptive').length}
               onClose={() => window.location.reload()}
             />
           )}

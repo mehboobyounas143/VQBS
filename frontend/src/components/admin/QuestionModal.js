@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FaTimes } from 'react-icons/fa'; // Import the React Icon for the cross button
+import { FaTimes } from 'react-icons/fa';
 
 const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
   const [questionText, setQuestionText] = useState('');
@@ -49,13 +49,12 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
     fetchTopics();
   }, [subject]);
 
-  // Initialize form fields when questionData is passed
   useEffect(() => {
     if (questionData) {
       setQuestionText(questionData.questionText);
       setType(questionData.type);
       setOptions(questionData.options || ['']);
-      setCorrectAnswer(questionData.correctAnswer);
+      setCorrectAnswer(questionData.correctAnswer || '');
       setSubject(questionData.subject._id);
       setTopic(questionData.topic._id);
       setDifficultyLevel(questionData.difficultyLevel._id);
@@ -83,36 +82,31 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
     const questionDataToUpdate = {
       questionText,
       type,
-      options,
-      correctAnswer,
       subject,
       topic,
       difficultyLevel,
+      ...(type !== 'Descriptive' && { options, correctAnswer }),
     };
 
     try {
       let response;
 
       if (questionData && questionData._id) {
-        // If questionData exists and has _id, update the question
         response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}api/questions/${questionData._id}`, questionDataToUpdate);
         toast.success('Question updated successfully!');
       } else {
-        // If no questionData or _id, create a new question
         response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}api/questions`, questionDataToUpdate);
         toast.success('Question created successfully!');
       }
 
-      // Re-fetch the updated list of questions and close the modal
-      if (fetchQuestions) fetchQuestions();  // Ensure parent component re-fetches the data
-      closeModal();  // Close the modal immediately after the update/create
+      if (fetchQuestions) fetchQuestions();
+      closeModal();
     } catch (error) {
       console.error('Error saving question:', error);
       toast.error('Error saving question!');
     }
   };
 
-  // Close modal if clicked outside
   const handleOutsideClick = (e) => {
     if (e.target === e.currentTarget) {
       closeModal();
@@ -127,10 +121,7 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full overflow-y-auto max-h-[90vh]">
         <header className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">{questionData ? 'Edit Question' : 'Create New Question'}</h2>
-          <button
-            onClick={closeModal}
-            className="text-gray-600 hover:text-gray-800"
-          >
+          <button onClick={closeModal} className="text-gray-600 hover:text-gray-800">
             <FaTimes size={24} />
           </button>
         </header>
@@ -148,7 +139,6 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
             />
           </div>
 
-          {/* Type Field */}
           <div className="mb-4">
             <label htmlFor="type" className="block text-lg font-semibold text-gray-700">Type</label>
             <select
@@ -160,58 +150,61 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
             >
               <option value="MCQ">MCQ</option>
               <option value="TrueFalse">True/False</option>
+              <option value="Descriptive">Descriptive</option>
             </select>
           </div>
 
-          {/* Options Fields */}
-          <div className="mb-4">
-            <label className="block text-lg font-semibold text-gray-700">Options</label>
-            {options.map((option, index) => (
-              <div key={index} className="flex flex-wrap gap-2 items-center">
-                <input
-                  type="text"
-                  value={option}
-                  onChange={(e) => handleOptionChange(index, e.target.value)}
-                  className="w-full sm:w-3/4 p-2 mt-1 border border-gray-300 rounded-md"
-                  required
-                />
+          {type !== 'Descriptive' && (
+            <>
+              <div className="mb-4">
+                <label className="block text-lg font-semibold text-gray-700">Options</label>
+                {options.map((option, index) => (
+                  <div key={index} className="flex flex-wrap gap-2 items-center">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(index, e.target.value)}
+                      className="w-full sm:w-3/4 p-2 mt-1 border border-gray-300 rounded-md"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveOption(index)}
+                      className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
                 <button
                   type="button"
-                  onClick={() => handleRemoveOption(index)}
-                  className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-700"
+                  onClick={handleAddOption}
+                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700 mt-2"
                 >
-                  Remove
+                  Add Option
                 </button>
               </div>
-            ))}
-            <button
-              type="button"
-              onClick={handleAddOption}
-              className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700 mt-2"
-            >
-              Add Option
-            </button>
-          </div>
 
-          <div className="mb-4">
-            <label htmlFor="correctAnswer" className="block text-lg font-semibold text-gray-700">Correct Answer</label>
-            <select
-              id="correctAnswer"
-              value={correctAnswer}
-              onChange={(e) => setCorrectAnswer(e.target.value)}
-              className="w-full p-2 mt-1 border border-gray-300 rounded-md"
-              required
-            >
-              <option value="">Select Correct Answer</option>
-              {options.map((option, index) => (
-                <option key={index} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="mb-4">
+                <label htmlFor="correctAnswer" className="block text-lg font-semibold text-gray-700">Correct Answer</label>
+                <select
+                  id="correctAnswer"
+                  value={correctAnswer}
+                  onChange={(e) => setCorrectAnswer(e.target.value)}
+                  className="w-full p-2 mt-1 border border-gray-300 rounded-md"
+                  required
+                >
+                  <option value="">Select Correct Answer</option>
+                  {options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
 
-          {/* Subject, Topic, Difficulty Level Fields */}
           <div className="mb-4">
             <label htmlFor="subject" className="block text-lg font-semibold text-gray-700">Subject</label>
             <select
@@ -268,7 +261,7 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
 
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-700"
+            className="w-full py-2 px-4 bg-[#2ecc71] text-white font-semibold rounded-md hover:bg-[#0b8c42]"
           >
             Save Changes
           </button>

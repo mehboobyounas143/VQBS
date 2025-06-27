@@ -6,16 +6,31 @@ const QuestionSchema = new mongoose.Schema({
     required: true,
   },
   type: {
-    type: String,  // Changed from ObjectId to String
+    type: String,
+    enum: ['MCQ', 'TrueFalse', 'Descriptive'],
     required: true,
   },
   options: {
     type: [String],
-    required: true,
+    validate: {
+      validator: function (v) {
+        // Only require options if type is not Descriptive
+        return this.type === 'Descriptive' || (Array.isArray(v) && v.length > 0);
+      },
+      message: 'Options are required for MCQ or TrueFalse questions.',
+    },
+    default: [],
   },
   correctAnswer: {
     type: String,
-    required: true,
+    validate: {
+      validator: function (v) {
+        // Only require correctAnswer if type is not Descriptive
+        return this.type === 'Descriptive' || (v && v.length > 0);
+      },
+      message: 'Correct answer is required for MCQ or TrueFalse questions.',
+    },
+    default: '',
   },
   subject: {
     type: mongoose.Schema.Types.ObjectId,
