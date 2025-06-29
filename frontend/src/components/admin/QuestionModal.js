@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaTimes } from 'react-icons/fa';
 
 const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
   const [questionText, setQuestionText] = useState('');
@@ -15,6 +12,8 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
   const [subjects, setSubjects] = useState([]);
   const [topics, setTopics] = useState([]);
   const [difficultyLevels, setDifficultyLevels] = useState([]);
+  const [keywords, setKeywords] = useState('');
+  const [message, setMessage] = useState({ text: '', type: '' });
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -26,6 +25,7 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
         setDifficultyLevels(difficultyLevelsRes.data.difficultyLevels || []);
       } catch (error) {
         console.error('Error fetching options:', error);
+        setMessage({ text: 'Error fetching subjects or difficulty levels.', type: 'error' });
       }
     };
 
@@ -40,6 +40,7 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
           setTopics(topicsRes.data.topics || []);
         } catch (error) {
           console.error('Error fetching topics:', error);
+          setMessage({ text: 'Error fetching topics.', type: 'error' });
         }
       } else {
         setTopics([]);
@@ -58,8 +59,18 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
       setSubject(questionData.subject._id);
       setTopic(questionData.topic._id);
       setDifficultyLevel(questionData.difficultyLevel._id);
+      setKeywords(questionData.keywords ? questionData.keywords.join(', ') : '');
     }
   }, [questionData]);
+
+  useEffect(() => {
+    if (message.text) {
+      const timer = setTimeout(() => {
+        setMessage({ text: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const handleOptionChange = (index, value) => {
     const newOptions = [...options];
@@ -79,6 +90,10 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const parsedKeywords = type === 'Descriptive' && keywords
+      ? keywords.split(',').map(k => k.trim()).filter(k => k)
+      : [];
+
     const questionDataToUpdate = {
       questionText,
       type,
@@ -86,24 +101,23 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
       topic,
       difficultyLevel,
       ...(type !== 'Descriptive' && { options, correctAnswer }),
+      ...(type === 'Descriptive' && { keywords: parsedKeywords }),
     };
 
     try {
-      let response;
-
       if (questionData && questionData._id) {
-        response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}api/questions/${questionData._id}`, questionDataToUpdate);
-        toast.success('Question updated successfully!');
+        await axios.put(`${process.env.REACT_APP_BACKEND_URL}api/questions/${questionData._id}`, questionDataToUpdate);
+        setMessage({ text: 'Question updated successfully!', type: 'success' });
       } else {
-        response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}api/questions`, questionDataToUpdate);
-        toast.success('Question created successfully!');
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}api/questions`, questionDataToUpdate);
+        setMessage({ text: 'Question created successfully!', type: 'success' });
       }
 
       if (fetchQuestions) fetchQuestions();
       closeModal();
     } catch (error) {
       console.error('Error saving question:', error);
-      toast.error('Error saving question!');
+      setMessage({ text: 'Error saving question.', type: 'error' });
     }
   };
 
@@ -122,9 +136,17 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
         <header className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">{questionData ? 'Edit Question' : 'Create New Question'}</h2>
           <button onClick={closeModal} className="text-gray-600 hover:text-gray-800">
-            <FaTimes size={24} />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </header>
+
+        {message.text && (
+          <div className={`p-3 mb-4 rounded-md text-white ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+            {message.text}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -159,18 +181,18 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
               <div className="mb-4">
                 <label className="block text-lg font-semibold text-gray-700">Options</label>
                 {options.map((option, index) => (
-                  <div key={index} className="flex flex-wrap gap-2 items-center">
+                  <div key={index} className="flex items-center gap-2 mb-2">
                     <input
                       type="text"
                       value={option}
                       onChange={(e) => handleOptionChange(index, e.target.value)}
-                      className="w-full sm:w-3/4 p-2 mt-1 border border-gray-300 rounded-md"
+                      className="flex-grow p-2 border border-gray-300 rounded-md"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(index)}
-                      className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-700"
+                      className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-700"
                     >
                       Remove
                     </button>
@@ -179,7 +201,7 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
                 <button
                   type="button"
                   onClick={handleAddOption}
-                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700 mt-2"
+                  className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700 mt-2"
                 >
                   Add Option
                 </button>
@@ -203,6 +225,56 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
                 </select>
               </div>
             </>
+          )}
+
+          {type === 'Descriptive' && (
+            <div className="mb-4">
+              <label className="block text-lg font-semibold text-gray-700">Keywords</label>
+              <div className="flex flex-wrap gap-2 border border-gray-300 p-2 rounded-md min-h-[48px]">
+                {keywords.split(',').map((kw, index) => {
+                  const trimmed = kw.trim();
+                  if (!trimmed) return null;
+                  return (
+                    <span
+                      key={index}
+                      className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                    >
+                      {trimmed}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = keywords
+                            .split(',')
+                            .map(k => k.trim())
+                            .filter((_, i) => i !== index)
+                            .join(', ');
+                          setKeywords(updated);
+                        }}
+                        className="ml-2 text-red-500 hover:text-red-700 font-bold"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  );
+                })}
+                <input
+                  type="text"
+                  placeholder="Type a keyword and press Enter"
+                  className="flex-grow outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ',') {
+                      e.preventDefault();
+                      const newKeyword = e.target.value.trim();
+                      if (newKeyword && !keywords.split(',').map(k => k.trim()).includes(newKeyword)) {
+                        const newKeywords = keywords ? `${keywords}, ${newKeyword}` : newKeyword;
+                        setKeywords(newKeywords);
+                      }
+                      e.target.value = '';
+                    }
+                  }}
+                />
+              </div>
+            </div>
           )}
 
           <div className="mb-4">
@@ -241,7 +313,7 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
             </select>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-6">
             <label htmlFor="difficultyLevel" className="block text-lg font-semibold text-gray-700">Difficulty Level</label>
             <select
               id="difficultyLevel"
@@ -261,7 +333,7 @@ const QuestionModal = ({ questionData, closeModal, fetchQuestions }) => {
 
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-[#2ecc71] text-white font-semibold rounded-md hover:bg-[#0b8c42]"
+            className="w-full py-2 px-4 bg-[#2ecc71] text-white font-semibold rounded-md hover:bg-#0b8c42"
           >
             Save Changes
           </button>

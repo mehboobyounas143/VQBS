@@ -1,5 +1,3 @@
-// routes/questionRoutes.js
-
 const express = require('express');
 const {
   createQuestion,
@@ -82,11 +80,17 @@ router.get('/questions/suggestions', async (req, res) => {
 
 // Existing routes
 router.post('/questions', createQuestion);
+
 router.get('/questions', getAllQuestions);
+
 router.get('/questions/topic/:topicId', getQuestionsByTopicId);
+
 router.get('/questions/subject/:subjectId', getQuestionsByDifficultyAndSubject);
+
 router.get('/questions/:id', getQuestionById);  // Keep this AFTER fixed routes like /search and /suggestions
+
 router.put('/questions/:id', updateQuestion);
+
 router.delete('/questions/:id', deleteQuestion);
 
 module.exports = router;

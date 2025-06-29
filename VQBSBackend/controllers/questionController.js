@@ -6,7 +6,16 @@ const DifficultyLevel = require('../models/DifficultyLevel');
 // Create a new question
 const createQuestion = async (req, res) => {
   try {
-    const { questionText, type, options, correctAnswer, subject, topic, difficultyLevel } = req.body;
+    const {
+      questionText,
+      type,
+      options,
+      correctAnswer,
+      subject,
+      topic,
+      difficultyLevel,
+      keywords = [],
+    } = req.body;
 
     const foundSubject = await Subject.findById(subject);
     if (!foundSubject) return res.status(404).json({ error: 'Subject not found' });
@@ -25,6 +34,7 @@ const createQuestion = async (req, res) => {
       subject,
       topic,
       difficultyLevel,
+      ...(type === 'Descriptive' && { keywords }),
     });
 
     await newQuestion.save();
@@ -69,7 +79,16 @@ const getQuestionById = async (req, res) => {
 const updateQuestion = async (req, res) => {
   try {
     const { id } = req.params;
-    const { questionText, type, options, correctAnswer, subject, topic, difficultyLevel } = req.body;
+    const {
+      questionText,
+      type,
+      options,
+      correctAnswer,
+      subject,
+      topic,
+      difficultyLevel,
+      keywords = [],
+    } = req.body;
 
     const foundSubject = await Subject.findById(subject);
     if (!foundSubject) return res.status(404).json({ error: 'Subject not found' });
@@ -80,11 +99,18 @@ const updateQuestion = async (req, res) => {
     const foundDifficultyLevel = await DifficultyLevel.findById(difficultyLevel);
     if (!foundDifficultyLevel) return res.status(404).json({ error: 'Difficulty level not found' });
 
-    const updatedQuestion = await Question.findByIdAndUpdate(
-      id,
-      { questionText, type, options, correctAnswer, subject, topic, difficultyLevel },
-      { new: true }
-    );
+    const updatedFields = {
+      questionText,
+      type,
+      options,
+      correctAnswer,
+      subject,
+      topic,
+      difficultyLevel,
+      ...(type === 'Descriptive' && { keywords }),
+    };
+
+    const updatedQuestion = await Question.findByIdAndUpdate(id, updatedFields, { new: true });
 
     if (!updatedQuestion) return res.status(404).json({ message: 'Question not found' });
 
@@ -110,7 +136,7 @@ const deleteQuestion = async (req, res) => {
   }
 };
 
-// Get questions by topic ID (with fixed difficulty case-insensitive lookup)
+// Get questions by topic ID
 const getQuestionsByTopicId = async (req, res) => {
   try {
     const { topicId } = req.params;

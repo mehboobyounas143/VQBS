@@ -67,14 +67,31 @@ const QuestionsPage = ({
       return;
     }
 
+    // Prepare responses array with evaluation
     const responsesArray = Object.keys(responses).map(questionId => {
       const response = responses[questionId];
       const question = questions.find(q => q._id === questionId);
       if (!response || !question) return null;
 
-      const isCorrect = question.type === 'Descriptive'
-        ? null
-        : question.correctAnswer === response;
+      let isCorrect = false;
+
+      if (question.type === 'Descriptive') {
+        // Descriptive keyword matching
+        const keywords = question.keywords || [];
+        const userAnswer = response.toLowerCase();
+
+        // Count how many keywords are included in user answer
+        const matchedKeywords = keywords.filter(keyword =>
+          userAnswer.includes(keyword.toLowerCase())
+        );
+
+        // Threshold for correctness - at least half of the keywords must match
+        const matchThreshold = Math.ceil(keywords.length / 2);
+        isCorrect = matchedKeywords.length >= matchThreshold;
+      } else {
+        // For MCQ and TrueFalse - exact match
+        isCorrect = question.correctAnswer === response;
+      }
 
       return {
         questionId,
@@ -86,7 +103,7 @@ const QuestionsPage = ({
       };
     }).filter(Boolean);
 
-    const calculatedScore = responsesArray.filter(r => r.isCorrect === true).length;
+    const calculatedScore = responsesArray.filter(r => r.isCorrect).length;
     setScore(calculatedScore);
 
     if (responsesArray.length > 0 && isAuthenticated) {
@@ -177,12 +194,16 @@ const QuestionsPage = ({
               </button>
             </form>
           )}
+
           {isSubmitted && (
-            <ScoreModal
-              score={score}
-              total={questions.filter(q => q.type !== 'Descriptive').length}
-              onClose={() => window.location.reload()}
-            />
+            <>
+              {/* Count all questions including descriptive */}
+              <ScoreModal
+                score={score}
+                total={questions.length}
+                onClose={() => window.location.reload()}
+              />
+            </>
           )}
         </>
       )}
