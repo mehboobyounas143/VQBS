@@ -105,7 +105,7 @@ const Reports = () => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF();
 
-      pdf.setTextColor(144, 12, 63);
+      pdf.setTextColor(46, 204, 113);
       pdf.setFontSize(18);
       pdf.text('Student Performance Report', pdf.internal.pageSize.getWidth() / 2, 10, { align: 'center' });
 
@@ -129,7 +129,7 @@ const Reports = () => {
         {/* Performance Section */}
         <div className="lg:col-span-2 space-y-6">
           <div>
-            <h2 className="text-3xl font-bold text-green-600 mb-2">Performance Overview</h2>
+            <h2 className="text-3xl font-bold text-[#2ecc71] mb-2">Performance Overview</h2>
             <p className="text-gray-600">Check your results based on selected subject and topic.</p>
           </div>
           <div className="text-lg text-gray-700 space-y-1">
@@ -182,7 +182,7 @@ const Reports = () => {
           <div className="text-center">
             <button
               onClick={downloadPDF}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-full transition"
+              className="bg-[#2ecc71] hover:bg-[#0b8c42] text-white font-semibold px-6 py-2 rounded-full transition"
             >
               Download PDF
             </button>

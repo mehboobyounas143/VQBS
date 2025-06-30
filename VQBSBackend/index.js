@@ -12,6 +12,7 @@ const studentRoutes = require('./routes/studentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const responseRoutes = require('./routes/responseRoutes');
 const searchRoutes = require('./routes/search'); // ✅ Added search route
+const feedbackRoutes = require('./routes/feedbackRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -25,7 +26,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // ✅ Added to serve uploads folder
 
 app.get('/', (req, res) => {
-  res.json('Hello Welcome!');
+  res.json({ message: 'Hello Welcome!' });
 });
 
 app.use('/api', questionRoutes);
@@ -36,6 +37,7 @@ app.use('/api', reportRoutes);
 app.use('/api', studentRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', responseRoutes);
+app.use('/api/feedback', feedbackRoutes);
 app.use('/api/search', searchRoutes); // ✅ Search route added here
 
 app.listen(PORT, () => {

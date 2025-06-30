@@ -238,9 +238,18 @@ const StudentSubjects = () => {
                   <div
                     key={subject._id}
                     onClick={() => handleSubjectClick(subject._id)}
-                    className="cursor-pointer rounded-lg border-2 border-green-600 p-6 hover:shadow-lg hover:scale-105 transition"
+                    className="cursor-pointer rounded-lg border-2 border-green-600 p-6 hover:shadow-lg hover:scale-105 hover:shadow-green-400/60 transition"
                   >
-                    <h3 className="text-lg font-semibold text-green-700 mb-2">{subject.subjectName}</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-green-700">{subject.subjectName}</h3>
+                      {subject.icon && (
+                        <img
+                          src={`${process.env.REACT_APP_BACKEND_URL}uploads/${subject.icon}`}
+                          alt={`${subject.subjectName} icon`}
+                          className="w-10 h-10 object-contain"
+                        />
+                      )}
+                    </div>
                     <div className="text-gray-500 text-sm mb-1">Topics: {subject.topicsCount}</div>
                     <div className="text-gray-500 text-sm mb-1">Questions: {subject.questionsCount}</div>
                     <p className="text-gray-500 text-xs">Created: {new Date(subject.createdAt).toLocaleDateString()}</p>

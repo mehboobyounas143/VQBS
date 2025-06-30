@@ -87,7 +87,7 @@ const AdminDashboard = () => {
         setSubjectStats(subjectStatsRes.stats || []);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to fetch data. Please check your API and try again.');
+        setError('No records found.');
       } finally {
         setLoading(false);
       }
@@ -173,11 +173,27 @@ const AdminDashboard = () => {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
-        <p className="text-red-600 text-lg font-semibold">{error}</p>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-center px-4">
+        <svg
+          className="w-16 h-16 text-green-400 mb-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">No records found</h2>
+        <p className="text-sm text-gray-500">
+          It looks like no data is available yet. Once students engage with the system, metrics will appear here.
+        </p>
       </div>
     );
-  }
+  }  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white p-6 sm:p-10">

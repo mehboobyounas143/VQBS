@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Outlet } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -20,34 +20,15 @@ import AdminSettings from './components/admin/AdminSettings';
 import Reports from './components/Reports';
 import AdminReports from './components/admin/AdminReports';
 import AdminLogin from './components/admin/AdminLogin';
-import VerifyEmail from './components/VerifyEmail'; // ✅ added
+import VerifyEmail from './components/VerifyEmail';
+import AdminFeedback from './components/admin/AdminFeedback';
+import FeedbackForm from './components/FeedbackForm';
 
 const StudentLayout = () => (
   <div className="flex flex-col min-h-screen">
     <Header />
     <main className="flex-grow flex justify-center items-center">
-      <Routes>
-        <Route path="/subjects" element={<StudentSubjects />} />
-        <Route path="/register" element={<StudentRegister />} />
-        <Route path="/login" element={<StudentLogin />} />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <Profile />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <PrivateRoute>
-              <Reports />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/verify/:token" element={<VerifyEmail />} /> {/* ✅ added */}
-      </Routes>
+      <Outlet />
     </main>
     <Footer />
   </div>
@@ -59,9 +40,8 @@ function App() {
       <AuthProvider>
         <AdminAuthProvider>
           <Routes>
-            {/* Student Routes with Header and Footer */}
-            <Route path="/" element={<StudentHome />} />
             <Route path="/" element={<StudentLayout />}>
+              <Route index element={<StudentHome />} />
               <Route path="subjects" element={<StudentSubjects />} />
               <Route path="register" element={<StudentRegister />} />
               <Route path="login" element={<StudentLogin />} />
@@ -81,10 +61,11 @@ function App() {
                   </PrivateRoute>
                 }
               />
-              <Route path="verify/:token" element={<VerifyEmail />} /> {/* ✅ added */}
+              <Route path="verify/:token" element={<VerifyEmail />} />
+              <Route path="feedback" element={<FeedbackForm />} />
             </Route>
 
-            {/* Admin Routes with AdminLayout */}
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route
               path="/admin/*"
               element={
@@ -96,13 +77,14 @@ function App() {
                       <Route path="questions" element={<AdminQuestions />} />
                       <Route path="settings" element={<AdminSettings />} />
                       <Route path="reports" element={<AdminReports />} />
+                      <Route path="feedbacks" element={<AdminFeedback />} />
                     </Routes>
                   </AdminLayout>
                 </AdminPrivateRoute>
               }
             />
-            <Route path="/admin/login" element={<AdminLogin />} />
           </Routes>
+
           <ToastContainer />
         </AdminAuthProvider>
       </AuthProvider>

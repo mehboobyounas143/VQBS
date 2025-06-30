@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';  // Import Link for client-side routing
 
 const Footer = () => {
   return (
@@ -9,6 +9,10 @@ const Footer = () => {
           <a href="https://facebook.com" className="text-white hover:text-secondary">Facebook</a>
           <a href="https://twitter.com" className="text-white hover:text-secondary">Twitter</a>
           <a href="https://linkedin.com" className="text-white hover:text-secondary">LinkedIn</a>
+          {/* Feedback Link */}
+          <Link to="/feedback" className="text-white hover:text-secondary">
+            Feedback
+          </Link>
         </div>
 
         <div className="mt-4">

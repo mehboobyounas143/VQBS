@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Import useRef
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import ScoreModal from './ScoreModal';
@@ -9,7 +9,7 @@ const QuestionsPage = ({
   subjectId,
   onBack,
   bypassDifficulty = false,
-  bypassDifficultyLevel = null, // expects 'easy', 'medium', or 'hard'
+  bypassDifficultyLevel = null,
 }) => {
   const [questions, setQuestions] = useState([]);
   const [responses, setResponses] = useState({});
@@ -19,7 +19,14 @@ const QuestionsPage = ({
   const [showDifficultyModal, setShowDifficultyModal] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showBotModal, setShowBotModal] = useState(false);
+  const [botQuestion, setBotQuestion] = useState('');
   const { isAuthenticated } = useAuth();
+
+  // Ref to the iframe element
+  const iframeRef = useRef(null);
+  // State to track if the bot inside the iframe is ready to receive messages
+  const [isBotIframeReady, setIsBotIframeReady] = useState(false);
 
   useEffect(() => {
     if (bypassDifficulty && bypassDifficultyLevel) {
@@ -36,6 +43,55 @@ const QuestionsPage = ({
       fetchQuestions();
     }
   }, [selectedDifficulty, topicId]);
+
+  useEffect(() => {
+    // This effect runs when the modal is shown or botQuestion changes
+    if (showBotModal) {
+      console.log('Bot modal shown. Setting up message listener.');
+
+      // Listener for messages from the iframe (e.g., bot ready event)
+      const handleMessage = (event) => {
+        // IMPORTANT: Always verify the origin in a production environment for security
+        // if (event.origin !== "https://cdn.botpress.cloud") return;
+        // console.log('Message from iframe:', event.data);
+
+        // Check for the bot's ready event (Botpress often uses 'webchat:ready' or similar)
+        if (event.data && event.data.type === 'webchat:ready') {
+          console.log('[Botpress Iframe] Webchat inside iframe is ready!');
+          setIsBotIframeReady(true);
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Cleanup listener when modal closes or component unmounts
+      return () => {
+        console.log('Cleaning up message listener.');
+        window.removeEventListener('message', handleMessage);
+        setIsBotIframeReady(false); // Reset ready state when modal closes
+      };
+    }
+  }, [showBotModal]); // Re-run when modal visibility changes
+
+  useEffect(() => {
+    // This effect sends the message ONLY when the bot iframe is confirmed ready
+    if (showBotModal && isBotIframeReady && botQuestion && iframeRef.current) {
+      console.log(`[Botpress Iframe] Sending question to bot: "${botQuestion}"`);
+      iframeRef.current.contentWindow.postMessage(
+        {
+          type: 'proactive-trigger',
+          payload: {
+            text: `Please give a hint (not the answer) for this question: "${botQuestion}"`,
+          },
+        },
+        '*' // Target origin, consider restricting to Botpress CDN URL for security
+      );
+      // You might want to clear botQuestion after sending if it's a one-time message
+      // setBotQuestion('');
+    } else if (showBotModal && botQuestion && !isBotIframeReady) {
+        console.log('[Botpress Iframe] Bot iframe not yet ready to receive question. Waiting...');
+    }
+  }, [showBotModal, isBotIframeReady, botQuestion]); // Depend on bot readiness
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -55,10 +111,7 @@ const QuestionsPage = ({
   };
 
   const handleResponseChange = (questionId, answer) => {
-    setResponses(prev => ({
-      ...prev,
-      [questionId]: answer,
-    }));
+    setResponses(prev => ({ ...prev, [questionId]: answer }));
   };
 
   const handleSubmit = async () => {
@@ -67,7 +120,6 @@ const QuestionsPage = ({
       return;
     }
 
-    // Prepare responses array with evaluation
     const responsesArray = Object.keys(responses).map(questionId => {
       const response = responses[questionId];
       const question = questions.find(q => q._id === questionId);
@@ -76,20 +128,14 @@ const QuestionsPage = ({
       let isCorrect = false;
 
       if (question.type === 'Descriptive') {
-        // Descriptive keyword matching
         const keywords = question.keywords || [];
         const userAnswer = response.toLowerCase();
-
-        // Count how many keywords are included in user answer
         const matchedKeywords = keywords.filter(keyword =>
           userAnswer.includes(keyword.toLowerCase())
         );
-
-        // Threshold for correctness - at least half of the keywords must match
         const matchThreshold = Math.ceil(keywords.length / 2);
         isCorrect = matchedKeywords.length >= matchThreshold;
       } else {
-        // For MCQ and TrueFalse - exact match
         isCorrect = question.correctAnswer === response;
       }
 
@@ -133,6 +179,12 @@ const QuestionsPage = ({
     }
   };
 
+  const openBotWithQuestion = (questionText) => {
+    setBotQuestion(questionText); // Set the question
+    setIsBotIframeReady(false); // Reset ready state for new modal opening
+    setShowBotModal(true);      // Open the modal
+  };
+
   return (
     <div className="mt-8">
       {showDifficultyModal && !bypassDifficulty && (
@@ -144,19 +196,26 @@ const QuestionsPage = ({
       {!showDifficultyModal && (
         <>
           {loading && <p className="text-gray-600">Loading questions...</p>}
-          {error && (
-            <div className="text-red-600 text-center my-4">{error}</div>
-          )}
+          {error && <div className="text-red-600 text-center my-4">{error}</div>}
           {!loading && !error && questions.length === 0 && (
             <p className="text-gray-500 text-center">No questions available for this topic.</p>
           )}
           {!loading && questions.length > 0 && (
             <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
               {questions.map((question, index) => (
-                <div key={question._id} className="mb-6">
-                  <h3 className="text-lg font-semibold mb-2">
-                    {index + 1}. {question.questionText}
-                  </h3>
+                <div key={question._id} className="mb-6 border-b pb-4 relative">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-semibold">
+                      {index + 1}. {question.questionText}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => openBotWithQuestion(question.questionText)}
+                      className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 text-sm rounded shadow"
+                    >
+                      Ask AI Agent
+                    </button>
+                  </div>
 
                   {question.type === 'Descriptive' ? (
                     <textarea
@@ -194,16 +253,36 @@ const QuestionsPage = ({
               </button>
             </form>
           )}
-
           {isSubmitted && (
-            <>
-              {/* Count all questions including descriptive */}
-              <ScoreModal
-                score={score}
-                total={questions.length}
-                onClose={() => window.location.reload()}
-              />
-            </>
+            <ScoreModal
+              score={score}
+              totalQuestions={questions.length}
+              onClose={() => window.location.reload()}
+            />
+          )}
+
+          {/* AI Agent Modal */}
+          {showBotModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+              <div className="bg-white w-full max-w-2xl rounded shadow-lg relative">
+                <button
+                  className="absolute top-2 right-2 text-red-600 font-bold text-xl"
+                  onClick={() => setShowBotModal(false)}
+                >
+                  ×
+                </button>
+                <iframe
+                  title="AI Chatbot"
+                  src="https://cdn.botpress.cloud/webchat/v3.0/shareable.html?configUrl=https://files.bpcontent.cloud/2025/06/29/21/20250629212703-KIKURQOZ.json"
+                  width="100%"
+                  height="500px"
+                  className="rounded-b"
+                  allow="microphone;"
+                  id="botpress-iframe"
+                  ref={iframeRef} // Attach the ref here
+                ></iframe>
+              </div>
+            </div>
           )}
         </>
       )}

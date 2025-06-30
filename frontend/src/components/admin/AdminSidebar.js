@@ -10,12 +10,14 @@ import {
   FaSignOutAlt,
 } from 'react-icons/fa';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { FaComments } from 'react-icons/fa';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, to: '/admin/dashboard' },
   { label: 'Students', icon: <FaUsers />, to: '/admin/students' },
   { label: 'Questions', icon: <FaBook />, to: '/admin/questions' },
   { label: 'Reports', icon: <FaChartBar />, to: '/admin/reports' },
+  { label: 'Feedbacks', icon: <FaComments />, to: '/admin/feedbacks' },
   { label: 'Settings', icon: <FaCogs />, to: '/admin/settings' },
 ];
 

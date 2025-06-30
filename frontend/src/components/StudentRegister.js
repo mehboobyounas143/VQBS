@@ -133,7 +133,7 @@ const StudentRegister = () => {
         </div>
         <button
           type="submit"
-          className="w-full p-2 bg-[#2ecc71] text-white font-semibold rounded-md hover:bg-[#700a31]"
+          className="w-full p-2 bg-[#2ecc71] text-white font-semibold rounded-md hover:bg-[#0B8C42]"
           disabled={loading} // Disable button while loading
         >
           {loading ? 'Registering...' : 'Register'}
