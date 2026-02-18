@@ -2,7 +2,7 @@
 
 **VQBS** is a full-stack MERN web application that helps students prepare for exams by practicing multiple-choice questions (MCQs). It features an intuitive user interface, robust admin panel, performance analytics, and a responsive design.
 
-🔗 **Live Demo**: [https://vqbs-eight.vercel.app](https://vqbs-eight.vercel.app)
+🔗 **Live Demo**: [[https://vqbs-eight.vercel.app](https://vqbs-eight.vercel.app)](https://vqbs-mehboob-younas-projects.vercel.app)
 
 ---
 
